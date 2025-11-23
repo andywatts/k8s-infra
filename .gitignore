@@ -1,0 +1,50 @@
+# Secrets and credentials
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+*-key.json
+*-credentials.json
+service-account*.json
+
+# Helm
+.helm/
+*.tgz
+Chart.lock
+
+# ArgoCD
+.argocd-source-*
+
+# Terraform state (in case you add it)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temp files
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig
+
+# Environment files
+.env
+.env.local
+*.env
+
+# Kubeconfig
+kubeconfig
+*.kubeconfig
+

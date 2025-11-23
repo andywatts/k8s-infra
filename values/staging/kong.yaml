@@ -1,0 +1,141 @@
+# Kong configuration for STAGING environment
+# DB-less mode, production-like setup with HA
+
+kong:
+  # DB-less mode
+  env:
+    database: "off"
+    nginx_worker_processes: "2"
+    proxy_access_log: /dev/stdout
+    admin_access_log: /dev/stdout
+    proxy_error_log: /dev/stderr
+    admin_error_log: /dev/stderr
+    log_level: "notice"  # Standard logging for staging
+    
+  # Ingress Controller
+  ingressController:
+    enabled: true
+    installCRDs: true
+    env:
+      feature_gates: "GatewayAlpha=true"
+      log_level: "info"
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    
+  # Proxy service - LoadBalancer
+  proxy:
+    enabled: true
+    type: LoadBalancer
+    annotations:
+      cloud.google.com/load-balancer-type: "External"
+    http:
+      enabled: true
+      servicePort: 80
+      containerPort: 8000
+    tls:
+      enabled: true
+      servicePort: 443
+      containerPort: 8443
+    
+  # Admin API - internal only
+  admin:
+    enabled: true
+    type: ClusterIP
+    http:
+      enabled: true
+      servicePort: 8001
+      containerPort: 8001
+      
+  # Admin GUI - enabled for staging management
+  manager:
+    enabled: true
+    type: ClusterIP
+    http:
+      enabled: true
+      servicePort: 8002
+      containerPort: 8002
+    
+  # Production-ready resources
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+      
+  # Multiple replicas for HA
+  replicaCount: 2
+  
+  # Enable autoscaling
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 75
+    
+  # Update strategy - ensure no downtime
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+      
+  # Service account
+  serviceAccount:
+    create: true
+    name: kong-staging
+    
+  # Pod disruption budget for HA
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+    
+  # Pod anti-affinity for spreading across nodes
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - kong
+          topologyKey: kubernetes.io/hostname
+    
+  # Pod annotations
+  podAnnotations:
+    environment: "staging"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8100"
+    
+  # Readiness and liveness probes (tuned for production)
+  readinessProbe:
+    httpGet:
+      path: /status
+      port: 8100
+      scheme: HTTP
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+    
+  livenessProbe:
+    httpGet:
+      path: /status
+      port: 8100
+      scheme: HTTP
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+

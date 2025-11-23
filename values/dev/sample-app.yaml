@@ -12,3 +12,24 @@ resources:
     memory: "128Mi"
     cpu: "200m"
 
+# Kong Ingress - enabled for dev testing
+ingress:
+  enabled: true
+  host: sample-app.dev.local
+  path: /
+  annotations:
+    konghq.com/plugins: sample-app-rate-limit,sample-app-cors
+
+# Kong plugins enabled for dev
+kong:
+  plugins:
+    rateLimit:
+      enabled: true
+      minute: 100
+    cors:
+      enabled: true
+      origins:
+        - "*"
+    requestTransformer:
+      enabled: false
+

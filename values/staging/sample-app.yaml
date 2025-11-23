@@ -12,3 +12,32 @@ resources:
     memory: "256Mi"
     cpu: "400m"
 
+# Kong Ingress - enabled for staging
+ingress:
+  enabled: true
+  host: sample-app.staging.example.com
+  path: /
+  annotations:
+    konghq.com/plugins: sample-app-rate-limit,sample-app-cors
+    konghq.com/override: sample-app-advanced
+
+# Kong plugins enabled for staging with stricter limits
+kong:
+  plugins:
+    rateLimit:
+      enabled: true
+      minute: 1000  # Higher limit for staging
+    cors:
+      enabled: true
+      origins:
+        - "https://staging.example.com"
+        - "https://app.staging.example.com"
+    requestTransformer:
+      enabled: true
+      addHeaders:
+        - "X-Environment:staging"
+  advancedConfig:
+    enabled: true
+    stripPath: false
+    preserveHost: true
+

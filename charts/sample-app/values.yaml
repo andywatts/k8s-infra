@@ -17,3 +17,31 @@ resources:
     memory: "128Mi"
     cpu: "200m"
 
+# Kong Ingress configuration
+ingress:
+  enabled: false  # Set to true to expose via Kong
+  host: sample-app.local
+  path: /
+  annotations: {}
+    # konghq.com/plugins: sample-app-rate-limit,sample-app-cors
+    # konghq.com/override: sample-app-advanced
+
+# Kong plugins (optional)
+kong:
+  plugins:
+    rateLimit:
+      enabled: false
+      minute: 100  # Requests per minute
+    cors:
+      enabled: false
+      origins:
+        - "*"
+    requestTransformer:
+      enabled: false
+      addHeaders:
+        - "X-Kong-Version:3.5"
+  advancedConfig:
+    enabled: false
+    stripPath: false
+    preserveHost: true
+

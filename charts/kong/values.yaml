@@ -1,0 +1,104 @@
+# Default Kong values - DB-less mode
+# Override per environment in values/dev/kong.yaml, values/staging/kong.yaml
+
+kong:
+  # DB-less mode configuration
+  env:
+    database: "off"
+    nginx_worker_processes: "2"
+    proxy_access_log: /dev/stdout
+    admin_access_log: /dev/stdout
+    admin_gui_access_log: /dev/stdout
+    portal_api_access_log: /dev/stdout
+    proxy_error_log: /dev/stderr
+    admin_error_log: /dev/stderr
+    admin_gui_error_log: /dev/stderr
+    portal_api_error_log: /dev/stderr
+    
+  # Enable Kong Ingress Controller
+  ingressController:
+    enabled: true
+    installCRDs: true
+    env:
+      # Enable feature gates for advanced features
+      feature_gates: "GatewayAlpha=true"
+    
+  # Proxy service configuration (default: LoadBalancer)
+  proxy:
+    enabled: true
+    type: LoadBalancer
+    annotations: {}
+    http:
+      enabled: true
+      servicePort: 80
+      containerPort: 8000
+    tls:
+      enabled: true
+      servicePort: 443
+      containerPort: 8443
+    
+  # Admin API service
+  admin:
+    enabled: true
+    type: ClusterIP  # Not exposed externally by default
+    http:
+      enabled: true
+      servicePort: 8001
+      containerPort: 8001
+    
+  # Manager (Admin GUI)
+  manager:
+    enabled: false  # Disable GUI by default, can enable in staging/prod
+    
+  # Portal
+  portal:
+    enabled: false
+    
+  # Enterprise features
+  enterprise:
+    enabled: false
+    
+  # Resource limits (conservative defaults)
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+      
+  # Autoscaling (disabled by default)
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    
+  # Number of Kong pods
+  replicaCount: 1
+  
+  # Deployment strategy
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+      
+  # Service Account
+  serviceAccount:
+    create: true
+    
+  # Security context
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    
+  # Pod annotations for declarative config
+  podAnnotations:
+    kuma.io/gateway: enabled
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8100"
+    
+  # Wait for database (not needed in DB-less mode)
+  waitImage:
+    enabled: false
+

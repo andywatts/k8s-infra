@@ -1,0 +1,90 @@
+# Kong configuration for DEV environment
+# DB-less mode, minimal resources, single replica
+
+kong:
+  # DB-less mode
+  env:
+    database: "off"
+    nginx_worker_processes: "1"
+    proxy_access_log: /dev/stdout
+    admin_access_log: /dev/stdout
+    proxy_error_log: /dev/stderr
+    admin_error_log: /dev/stderr
+    log_level: "debug"  # More verbose logging in dev
+    
+  # Ingress Controller
+  ingressController:
+    enabled: true
+    installCRDs: true
+    env:
+      feature_gates: "GatewayAlpha=true"
+      log_level: "debug"
+    
+  # Proxy service - LoadBalancer for dev testing
+  # Consider changing to NodePort if you want to save costs
+  proxy:
+    enabled: true
+    type: LoadBalancer
+    annotations:
+      cloud.google.com/load-balancer-type: "External"
+    http:
+      enabled: true
+      servicePort: 80
+      containerPort: 8000
+    tls:
+      enabled: true
+      servicePort: 443
+      containerPort: 8443
+    
+  # Admin API - accessible for dev work
+  admin:
+    enabled: true
+    type: ClusterIP
+    http:
+      enabled: true
+      servicePort: 8001
+      containerPort: 8001
+      
+  # Enable Admin GUI in dev for easier management
+  manager:
+    enabled: true
+    type: ClusterIP
+    http:
+      enabled: true
+      servicePort: 8002
+      containerPort: 8002
+    
+  # Minimal resources for dev
+  resources:
+    limits:
+      cpu: 300m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+      
+  # Single replica for dev
+  replicaCount: 1
+  
+  # No autoscaling in dev
+  autoscaling:
+    enabled: false
+    
+  # Update strategy
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+      
+  # Service account
+  serviceAccount:
+    create: true
+    name: kong-dev
+    
+  # Pod annotations
+  podAnnotations:
+    environment: "dev"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8100"
+
