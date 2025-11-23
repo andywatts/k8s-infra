@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: dev-apps
+  name: staging-cluster-apps
   namespace: argocd
 spec:
   generators:
@@ -9,10 +9,10 @@ spec:
       repoURL: https://github.com/andywatts/k8s-apps
       revision: main
       directories:
-      - path: environments/dev/*
+      - path: clusters/staging/*
   template:
     metadata:
-      name: 'dev-{{path.basename}}'
+      name: 'staging-{{path.basename}}'
     spec:
       project: default
       source:
@@ -20,6 +20,7 @@ spec:
         targetRevision: main
         path: '{{path}}'
       destination:
+        # Update this server URL when staging cluster is created
         server: https://kubernetes.default.svc
         namespace: '{{path.basename}}'
       syncPolicy:
