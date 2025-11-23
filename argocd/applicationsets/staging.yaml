@@ -19,8 +19,8 @@ spec:
         cluster: staging
         project: kong
         repoURL: https://github.com/andywatts/k8s-infra
-        path: charts/kong
-        valuesFile: values/staging/kong.yaml
+        path: kong/chart
+        valuesFile: ../values/staging.yaml
   template:
     metadata:
       name: '{{cluster}}-{{app}}'

@@ -12,14 +12,19 @@ argocd/
   applicationsets/
     dev.yaml                 # Dev environment apps
     staging.yaml             # Staging environment apps
-charts/
-  kong/                      # Kong Helm chart
-values/
-  dev/
-    kong.yaml                # Kong dev config
-  staging/
-    kong.yaml                # Kong staging config
+kong/                        # Platform service: Kong API Gateway
+  chart/                     # Helm chart
+    Chart.yaml
+    values.yaml
+    templates/
+  values/                    # Environment overrides
+    dev.yaml
+    staging.yaml
 ```
+
+**Repo Purpose:** Infrastructure team's repository for platform services (Kong, future: Istio, cert-manager, etc.) and ArgoCD configuration.
+
+**Application repos:** Each app team owns their repo (e.g., `sample-app/`) with their own Helm chart.
 
 ## Architecture
 
@@ -92,33 +97,37 @@ curl http://sample-app.dev.local
 
 ## Add New Application
 
-Each app lives in its own repo with its Helm chart.
+**App teams:** Create your own repo with Helm chart
 
 ```bash
-# 1. Create new repo
+# 1. Create app repo
 mkdir my-app && cd my-app
 mkdir -p chart/templates environments
 
-# 2. Add Helm chart (Chart.yaml, values.yaml, templates/)
+# 2. Add Helm chart + environment values
+# 3. Push to GitHub
 
-# 3. Add environment configs
-cat > environments/values-dev.yaml <<EOF
-replicaCount: 2
-image:
-  repository: my-image
-  tag: latest
-EOF
+# 4. Infra team: Update k8s-infra repo
+# - Create argocd/projects/my-app.yaml (restrict to namespace)
+# - Add entry to argocd/applicationsets/dev.yaml
+```
 
-# 4. Push to GitHub
-git init && git add . && git commit -m "Initial commit"
-gh repo create my-app --public --source=. --push
+## Add New Infrastructure Service
 
-# 5. Update k8s-infra repo
-# - Create argocd/projects/my-app.yaml (restrict to my-app namespace)
-# - Add app entry to argocd/applicationsets/dev.yaml (and staging if needed)
+**Infra team:** Add to this repo
 
-# 6. Deploy
-git add . && git commit -m "Add my-app" && git push
+```bash
+# 1. Create service directory
+mkdir -p my-service/chart/templates my-service/values
+
+# 2. Add Helm chart to my-service/chart/
+# 3. Add my-service/values/dev.yaml and staging.yaml
+
+# 4. Create argocd/projects/my-service.yaml
+# 5. Add to argocd/applicationsets/dev.yaml
+
+# 6. Commit and push
+git add . && git commit -m "Add my-service" && git push
 ```
 
 ArgoCD syncs automatically.

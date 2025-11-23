@@ -19,8 +19,8 @@ spec:
         cluster: dev
         project: kong
         repoURL: https://github.com/andywatts/k8s-infra
-        path: charts/kong
-        valuesFile: values/dev/kong.yaml
+        path: kong/chart
+        valuesFile: ../values/dev.yaml
   template:
     metadata:
       name: '{{cluster}}-{{app}}'
