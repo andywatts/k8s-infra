@@ -5,27 +5,32 @@ metadata:
   namespace: argocd
 spec:
   generators:
-  - matrix:
-      generators:
-      - list:
-          elements:
-          - app: sample-app
-          - app: kong
-      - list:
-          elements:
-          - cluster: dev
+  - list:
+      elements:
+      # Apps that live in their own repos
+      - app: sample-app
+        cluster: dev
+        repoURL: https://github.com/andywatts/sample-app
+        path: chart
+        valuesFile: environments/values-dev.yaml
+      # Platform infrastructure (Kong) in k8s-apps repo
+      - app: kong
+        cluster: dev
+        repoURL: https://github.com/andywatts/k8s-apps
+        path: charts/kong
+        valuesFile: values/dev/kong.yaml
   template:
     metadata:
       name: '{{cluster}}-{{app}}'
     spec:
       project: dev
       source:
-        repoURL: https://github.com/andywatts/k8s-apps
+        repoURL: '{{repoURL}}'
         targetRevision: main
-        path: 'charts/{{app}}'
+        path: '{{path}}'
         helm:
           valueFiles:
-          - '../../values/{{cluster}}/{{app}}.yaml'
+          - '{{valuesFile}}'
       destination:
         server: https://kubernetes.default.svc
         namespace: '{{app}}'

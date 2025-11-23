@@ -9,6 +9,7 @@ spec:
   # Source repositories
   sourceRepos:
   - 'https://github.com/andywatts/k8s-apps'
+  - 'https://github.com/andywatts/sample-app'
   - 'https://charts.konghq.com'
   
   # Allowed destinations
