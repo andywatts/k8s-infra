@@ -1,80 +1,68 @@
 # k8s-apps
 
-GitOps repository for Kubernetes applications managed by ArgoCD. Deploy once, sync everywhere.
+GitOps repository for Kubernetes applications managed by ArgoCD.
 
-## 📁 Structure
+## Structure
 
 ```
-charts/                  # Helm charts (DRY - shared across clusters)
-  sample-app/           # Example nginx app
-  kong/                 # Kong API Gateway
-values/                 # Environment-specific overrides
+charts/
+  sample-app/          # Nginx example app
+  kong/                # Kong API Gateway (DB-less)
+values/
   dev/
-    *.yaml              # Dev cluster configs
-  staging/
-    *.yaml              # Staging cluster configs
-applicationset-dev.yaml     # Auto-deploy to dev
-applicationset-staging.yaml # Auto-deploy to staging
+    sample-app.yaml    # Dev config
+    kong.yaml          # Kong dev config
+manifests/
+  sample-app-ingress.yaml  # Kong ingress + plugins
+applicationset-dev.yaml    # ArgoCD auto-deployment
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
-### 1. Connect to Cluster
 ```bash
+# Connect to cluster
 gcloud container clusters get-credentials dev-cluster \
-  --zone=us-west2-a --project=development-690488
-```
+  --region=us-west2 --project=development-690488
 
-### 2. Deploy Applications
-```bash
+# Deploy applications
 kubectl apply -f applicationset-dev.yaml
+
+# Check status
+kubectl get applications -n argocd
+kubectl get pods -A
 ```
 
-### 3. Access ArgoCD
-```bash
-# Get admin password
-kubectl -n argocd get secret argocd-initial-admin-secret \
-  -o jsonpath="{.data.password}" | base64 -d
+## Kong API Gateway
 
-# Port forward to UI
-kubectl port-forward svc/argocd-server -n argocd 8080:443
-# Open https://localhost:8080 (admin / password-from-above)
-```
-
-## 🌐 Kong API Gateway
-
-Kong is deployed as the ingress controller with DB-less mode.
+Kong is deployed with Ingress Controller in DB-less mode.
 
 ```bash
-# Deploy Kong (one command)
-./deploy-kong.sh dev
+# Get Kong IP
+kubectl get svc -n kong dev-kong-kong-proxy
 
-# Get LoadBalancer IP
-kubectl get svc -n kong kong-kong-proxy
-
-# Test Kong
-curl http://<KONG_IP>
+# Current: 35.235.100.23
 ```
+
+**Access sample-app via Kong:**
+```bash
+# Add to /etc/hosts
+echo "35.235.100.23 sample-app.dev.local" | sudo tee -a /etc/hosts
+
+# Test
+curl http://sample-app.dev.local
+```
+
+**Features:**
+- ✅ Rate limiting (100 req/min)
+- ✅ CORS enabled
+- ✅ DB-less mode (config via CRDs)
 
 **Documentation:**
-- [KONG-QUICK-START.md](./KONG-QUICK-START.md) - Fast track guide
-- [KONG.md](./KONG.md) - Complete reference
-- [KONG-INFRASTRUCTURE.md](./KONG-INFRASTRUCTURE.md) - Infrastructure & costs
+- [KONG.md](./KONG.md) - Complete guide
+- [KONG-QUICK-START.md](./KONG-QUICK-START.md) - Fast setup
+- [KONG-INFRASTRUCTURE.md](./KONG-INFRASTRUCTURE.md) - GCP infrastructure
 
-**Expose your app through Kong:**
-```yaml
-# In values/dev/your-app.yaml
-ingress:
-  enabled: true
-  host: your-app.example.com
-kong:
-  plugins:
-    rateLimit:
-      enabled: true
-      minute: 100
-```
-
-## ➕ Add New Application
+## Add New Application
 
 ```bash
 # 1. Create Helm chart
@@ -82,7 +70,7 @@ mkdir -p charts/my-app/templates
 
 # 2. Add Chart.yaml, values.yaml, templates/
 
-# 3. Create environment configs
+# 3. Create environment config
 cat > values/dev/my-app.yaml <<EOF
 replicaCount: 2
 image:
@@ -90,36 +78,59 @@ image:
   tag: latest
 EOF
 
-# 4. Update ApplicationSet
-# Add "- app: my-app" to applicationset-dev.yaml
+# 4. Update applicationset-dev.yaml
+# Add "- app: my-app" to the list
 
 # 5. Deploy
 git add . && git commit -m "Add my-app" && git push
 ```
 
-ArgoCD auto-syncs within 3 minutes.
+ArgoCD syncs automatically within 3 minutes.
 
-## 🏗️ Current Deployments
+## Current Deployments
 
-| App | Dev | Staging | Description |
-|-----|-----|---------|-------------|
-| **sample-app** | ✅ | 🔜 | Example nginx app with Kong ingress |
-| **kong** | ✅ | 🔜 | API Gateway & Ingress Controller |
+| App | Status | Description |
+|-----|--------|-------------|
+| **kong** | ✅ Healthy | API Gateway & Ingress Controller |
+| **sample-app** | ✅ Healthy | Nginx example with Kong ingress |
 
-## 📚 Documentation
+## Kong Ingress for Your App
 
-- [HELM-STRUCTURE.md](./HELM-STRUCTURE.md) - Helm chart organization
+```yaml
+# In values/dev/your-app.yaml
+ingress:
+  enabled: true
+  host: your-app.dev.local
+```
+
+Or apply manually:
+```bash
+kubectl apply -f manifests/your-app-ingress.yaml
+```
+
+## Useful Commands
+
+```bash
+# View applications
+kubectl get applications -n argocd
+
+# Kong resources
+kubectl get ingress,kongplugins -A
+
+# Force ArgoCD sync
+kubectl patch app my-app -n argocd \
+  --type merge -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}'
+
+# Kong admin API
+kubectl port-forward -n kong svc/dev-kong-kong-admin 8001:8001
+curl http://localhost:8001/
+```
+
+## Documentation
+
+- [HELM-STRUCTURE.md](./HELM-STRUCTURE.md) - Chart organization
 - [MULTI-CLUSTER.md](./MULTI-CLUSTER.md) - Multi-cluster setup
-- [SETUP-COMPLETE.md](./SETUP-COMPLETE.md) - Initial setup details
-
-## 🎯 Next Steps
-
-- [ ] Deploy Kong: `./deploy-kong.sh dev`
-- [ ] Add your first app
-- [ ] Configure custom domains
-- [ ] Set up TLS certificates with cert-manager
-- [ ] Create staging cluster
-- [ ] Enable monitoring (Prometheus/Grafana)
+- [SETUP-COMPLETE.md](./SETUP-COMPLETE.md) - Setup details
 
 ---
-**GitOps:** Push to main → ArgoCD auto-deploys → Kubernetes updates
+**GitOps:** Push to main → ArgoCD syncs → Kubernetes updates
