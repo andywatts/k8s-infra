@@ -5,27 +5,30 @@ metadata:
   namespace: argocd
 spec:
   generators:
-  - git:
-      repoURL: https://github.com/andywatts/k8s-apps
-      revision: main
-      files:
-      - path: values/staging/*.yaml
+  - matrix:
+      generators:
+      - list:
+          elements:
+          - app: sample-app
+      - list:
+          elements:
+          - cluster: staging
   template:
     metadata:
-      name: 'staging-{{path.basenameNormalized}}'
+      name: '{{cluster}}-{{app}}'
     spec:
       project: default
       source:
         repoURL: https://github.com/andywatts/k8s-apps
         targetRevision: main
-        path: 'charts/{{path.basenameNormalized}}'
+        path: 'charts/{{app}}'
         helm:
           valueFiles:
-          - '../../{{path}}'
+          - '../../values/{{cluster}}/{{app}}.yaml'
       destination:
         # Update this server URL when staging cluster is created
         server: https://kubernetes.default.svc
-        namespace: '{{path.basenameNormalized}}'
+        namespace: '{{app}}'
       syncPolicy:
         automated:
           prune: true
