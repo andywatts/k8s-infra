@@ -5,26 +5,29 @@ metadata:
   namespace: argocd
 spec:
   generators:
-  - git:
-      repoURL: https://github.com/andywatts/k8s-apps
-      revision: main
-      files:
-      - path: values/dev/*.yaml
+  - matrix:
+      generators:
+      - list:
+          elements:
+          - app: sample-app
+      - list:
+          elements:
+          - cluster: dev
   template:
     metadata:
-      name: 'dev-{{path.basenameNormalized}}'
+      name: '{{cluster}}-{{app}}'
     spec:
       project: default
       source:
         repoURL: https://github.com/andywatts/k8s-apps
         targetRevision: main
-        path: 'charts/{{path.basenameNormalized}}'
+        path: 'charts/{{app}}'
         helm:
           valueFiles:
-          - '../../{{path}}'
+          - '../../values/{{cluster}}/{{app}}.yaml'
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{path.basenameNormalized}}'
+        namespace: '{{app}}'
       syncPolicy:
         automated:
           prune: true
