@@ -5,17 +5,20 @@ Kubernetes platform infrastructure charts and ArgoCD configuration.
 ## Structure
 
 ```
+argocd/
+  projects/
+    kong.yaml                # Kong AppProject (namespace: kong)
+    sample-app.yaml          # sample-app AppProject (namespace: sample-app)
+  applicationsets/
+    dev.yaml                 # Dev environment apps
+    staging.yaml             # Staging environment apps
 charts/
-  kong/                      # Kong API Gateway (DB-less)
+  kong/                      # Kong Helm chart
 values/
   dev/
     kong.yaml                # Kong dev config
   staging/
     kong.yaml                # Kong staging config
-appproject-kong.yaml         # ArgoCD project for Kong (namespace: kong)
-appproject-sample-app.yaml   # ArgoCD project for sample-app (namespace: sample-app)
-applicationset-dev.yaml      # Dev apps auto-deployment
-applicationset-staging.yaml  # Staging apps auto-deployment
 ```
 
 ## Architecture
@@ -31,14 +34,14 @@ applicationset-staging.yaml  # Staging apps auto-deployment
 
 ### ArgoCD Components
 
-**AppProjects** (per application):
-- `appproject-kong.yaml` - Kong can only deploy to `kong` namespace
-- `appproject-sample-app.yaml` - sample-app can only deploy to `sample-app` namespace
+**AppProjects** (`argocd/projects/`):
+- `kong.yaml` - Kong can only deploy to `kong` namespace
+- `sample-app.yaml` - sample-app can only deploy to `sample-app` namespace
 - Each app isolated to its own namespace (security)
 
-**ApplicationSets** (per environment):
-- `applicationset-dev.yaml` - Generates dev-kong, dev-sample-app
-- `applicationset-staging.yaml` - Generates staging-kong, staging-sample-app
+**ApplicationSets** (`argocd/applicationsets/`):
+- `dev.yaml` - Generates dev-kong, dev-sample-app
+- `staging.yaml` - Generates staging-kong, staging-sample-app
 - Automates multi-app deployment from templates
 
 ## Quick Start
@@ -48,10 +51,9 @@ applicationset-staging.yaml  # Staging apps auto-deployment
 gcloud container clusters get-credentials dev-cluster \
   --region=us-west2 --project=development-690488
 
-# Deploy AppProjects and ApplicationSet
-kubectl apply -f appproject-kong.yaml
-kubectl apply -f appproject-sample-app.yaml
-kubectl apply -f applicationset-dev.yaml
+# Deploy AppProjects and ApplicationSets
+kubectl apply -f argocd/projects/
+kubectl apply -f argocd/applicationsets/dev.yaml
 
 # Check status
 kubectl get applications -n argocd
@@ -112,8 +114,8 @@ git init && git add . && git commit -m "Initial commit"
 gh repo create my-app --public --source=. --push
 
 # 5. Update k8s-infra repo
-# - Create appproject-my-app.yaml (restrict to my-app namespace)
-# - Add app entry to applicationset-dev.yaml (and staging if needed)
+# - Create argocd/projects/my-app.yaml (restrict to my-app namespace)
+# - Add app entry to argocd/applicationsets/dev.yaml (and staging if needed)
 
 # 6. Deploy
 git add . && git commit -m "Add my-app" && git push
