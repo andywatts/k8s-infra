@@ -9,6 +9,7 @@ spec:
       generators:
       - list:
           elements:
+          - app: sample-app
           - app: kong
       - list:
           elements:
