@@ -5,8 +5,15 @@ GitOps repo for Kubernetes applications managed by ArgoCD.
 ## Structure
 
 ```
-applicationset.yaml           # Auto-discovers apps in environments/
-environments/dev/*/          # Dev environment apps
+apps/
+  sample-app/
+    base/              # Base manifests
+    overlays/
+      dev/             # Dev-specific values
+      staging/         # Staging-specific values
+applicationsets/
+  dev.yaml             # Auto-discovers dev overlays
+  staging.yaml         # Auto-discovers staging overlays
 ```
 
 ## Setup
@@ -16,9 +23,9 @@ environments/dev/*/          # Dev environment apps
 gcloud container clusters get-credentials dev-cluster --zone=us-west2-a --project=development-690488
 ```
 
-2. **Apply ApplicationSet:**
+2. **Apply ApplicationSets:**
 ```bash
-kubectl apply -f applicationset.yaml
+kubectl apply -f applicationsets/
 ```
 
 3. **Access ArgoCD UI:**
@@ -34,12 +41,13 @@ Login: `admin` / (password from above)
 
 ## Deploy New App
 
-Just add a folder under `environments/dev/`:
+Create base manifests + environment overlays:
 
 ```bash
-mkdir -p environments/dev/my-app
-# Add manifests
+mkdir -p apps/my-app/{base,overlays/{dev,staging}}
+# Add base manifests to apps/my-app/base/
+# Add kustomization.yaml to each overlay
 git commit && git push
 ```
 
-ArgoCD auto-discovers and deploys it.
+ArgoCD auto-discovers and deploys to both environments.
