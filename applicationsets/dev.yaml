@@ -1,33 +1,31 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: dev-cluster-apps
+  name: dev-apps
   namespace: argocd
 spec:
   generators:
   - git:
       repoURL: https://github.com/andywatts/k8s-apps
       revision: main
-      files:
-      - path: values/dev/*.yaml
+      directories:
+      - path: apps/*/overlays/dev
   template:
     metadata:
-      name: 'dev-{{path.basenameNormalized}}'
+      name: 'dev-{{path[1]}}'
     spec:
       project: default
       source:
         repoURL: https://github.com/andywatts/k8s-apps
         targetRevision: main
-        path: 'charts/{{path.basenameNormalized}}'
-        helm:
-          valueFiles:
-          - '../../{{path}}'
+        path: '{{path}}'
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{path.basenameNormalized}}'
+        namespace: '{{path[1]}}-dev'
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
         syncOptions:
         - CreateNamespace=true
+

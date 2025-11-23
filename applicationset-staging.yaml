@@ -8,25 +8,27 @@ spec:
   - git:
       repoURL: https://github.com/andywatts/k8s-apps
       revision: main
-      directories:
-      - path: clusters/staging/*
+      files:
+      - path: values/staging/*.yaml
   template:
     metadata:
-      name: 'staging-{{path.basename}}'
+      name: 'staging-{{path.basenameNormalized}}'
     spec:
       project: default
       source:
         repoURL: https://github.com/andywatts/k8s-apps
         targetRevision: main
-        path: '{{path}}'
+        path: 'charts/{{path.basenameNormalized}}'
+        helm:
+          valueFiles:
+          - '../../{{path}}'
       destination:
         # Update this server URL when staging cluster is created
         server: https://kubernetes.default.svc
-        namespace: '{{path.basename}}'
+        namespace: '{{path.basenameNormalized}}'
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
         syncOptions:
         - CreateNamespace=true
-
