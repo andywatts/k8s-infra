@@ -4,7 +4,7 @@ Kong Ingress Controller in DB-less mode, deployed via ArgoCD.
 
 ## Access
 
-### Proxy (LoadBalancer)
+**###** Proxy (LoadBalancer)
 ```bash
 kubectl get svc -n kong kong-kong-proxy
 # Use external IP for routing traffic
@@ -12,13 +12,13 @@ kubectl get svc -n kong kong-kong-proxy
 
 ### Admin API (ClusterIP)
 ```bash
-kubectl port-forward -n kong svc/kong-kong-admin 8001:8001
+kubectl port-forward -n kong svc/dev-kong-kong-admin 8001:8001
 curl http://localhost:8001/routes
 ```
 
 ### Manager GUI (ClusterIP)
 ```bash
-kubectl port-forward -n kong svc/kong-kong-manager 8002:8002
+kubectl port-forward -n kong svc/dev-kong-kong-manager 8002:8002
 open http://localhost:8002
 ```
 
